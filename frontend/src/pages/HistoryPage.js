@@ -565,10 +565,10 @@ const BlockchainHistoryPage = () => {
         <Box sx={{ flexGrow: 1 }}>
           <Typography variant="h4" component="h1" gutterBottom>
             <TimelineIcon sx={{ mr: 2, verticalAlign: 'middle' }} />
-            Histórico
+            Histórico da Equipe
           </Typography>
           <Typography variant="subtitle1" color="text.secondary">
-            Acompanhe todas as operações registradas na blockchain da sua equipe Scrum
+            Acompanhe todas as operações blockchain realizadas pelos membros da sua equipe Scrum
           </Typography>
         </Box>
         <Stack direction="row" spacing={1}>
@@ -824,6 +824,9 @@ const BlockchainHistoryPage = () => {
                   Data/Hora
                 </TableCell>
                 <TableCell sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 'bold' }}>
+                  Membro da Equipe
+                </TableCell>
+                <TableCell sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 'bold' }}>
                   Transação
                 </TableCell>
                 <TableCell sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 'bold' }}>
@@ -860,6 +863,31 @@ const BlockchainHistoryPage = () => {
                       <Typography variant="caption" color="text.secondary">
                         {format(parseISO(transaction.created_at), 'HH:mm:ss', { locale: ptBR })}
                       </Typography>
+                    </TableCell>
+
+                    <TableCell>
+                      <Box display="flex" alignItems="center" gap={1}>
+                        <Avatar
+                          sx={{
+                            width: 32,
+                            height: 32,
+                            bgcolor: 'secondary.main',
+                            fontSize: '0.875rem'
+                          }}
+                        >
+                          {transaction.username ? transaction.username.charAt(0).toUpperCase() : 'U'}
+                        </Avatar>
+                        <Box>
+                          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                            {transaction.full_name || transaction.username || 'Usuário Desconhecido'}
+                          </Typography>
+                          {transaction.team_name && (
+                            <Typography variant="caption" color="text.secondary">
+                              {transaction.team_name}
+                            </Typography>
+                          )}
+                        </Box>
+                      </Box>
                     </TableCell>
 
                     <TableCell>
@@ -960,7 +988,7 @@ const BlockchainHistoryPage = () => {
 
               {transactions.length === 0 && !loading && (
                 <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 8 }}>
+                  <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
                     <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
                       <TimelineIcon sx={{ fontSize: 64, color: 'text.secondary', opacity: 0.3 }} />
                       <Typography variant="h6" color="text.secondary">
@@ -1024,13 +1052,41 @@ const BlockchainHistoryPage = () => {
         <DialogContent sx={{ p: 3 }}>
           {selectedTransaction && (
             <Box>
-              {}
+              {/* Card de Informações da Operação */}
               <Card sx={{ mb: 3, bgcolor: 'grey.50' }}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom color="primary">
                     Informações da Operação
                   </Typography>
                   <Grid container spacing={2}>
+                    <Grid item xs={12}>
+                      <Typography variant="subtitle2" gutterBottom>
+                        Realizado por:
+                      </Typography>
+                      <Box display="flex" alignItems="center" gap={1} mb={2}>
+                        <Avatar
+                          sx={{
+                            width: 40,
+                            height: 40,
+                            bgcolor: 'secondary.main',
+                            fontSize: '1rem'
+                          }}
+                        >
+                          {selectedTransaction.username ? selectedTransaction.username.charAt(0).toUpperCase() : 'U'}
+                        </Avatar>
+                        <Box>
+                          <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                            {selectedTransaction.full_name || selectedTransaction.username || 'Usuário Desconhecido'}
+                          </Typography>
+                          {selectedTransaction.team_name && (
+                            <Typography variant="caption" color="text.secondary">
+                              Equipe: {selectedTransaction.team_name}
+                            </Typography>
+                          )}
+                        </Box>
+                      </Box>
+                    </Grid>
+                    
                     <Grid item xs={12} md={6}>
                       <Typography variant="subtitle2" gutterBottom>
                         Tipo de Operação:

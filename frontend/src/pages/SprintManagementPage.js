@@ -759,13 +759,11 @@ function SprintManagementPage() {
             });
             console.log('✅ 3. Blockchain_address e transactionHash atualizados no banco');
           } catch (hashError) {
-            console.warn('⚠️ Erro ao atualizar blockchain_address (não crítico):', hashError);
+            throw new Error('Erro ao sincronizar dados blockchain no banco');
           }
 
-          customSetSuccess(`✅ Sucesso! Tarefa criada. Hash: ${tx.hash}`, 'success');
+          customSetSuccess(`✅ Tarefa ${editTask ? 'atualizada' : 'criada'} na blockchain! Hash: ${tx.hash}`, 'success');
         }
-      } else {
-        customSetSuccess(`✅ Sucesso! Tarefa ${editTask ? 'atualizada' : 'criada'} no banco de dados. (Blockchain indisponível)`, 'success');
       }
 
 
@@ -1074,9 +1072,7 @@ function SprintManagementPage() {
           console.warn('⚠️ Erro ao salvar transação (não crítico):', transactionError);
         }
 
-        customSetSuccess(`✅ Sucesso! Status alterado. Hash: ${tx.hash}`, 'success');
-      } else {
-        customSetSuccess('⚠️ Parcialmente concluído! Status atualizado no banco de dados. (Tarefa não registrada na blockchain)', 'warning');
+        customSetSuccess(`✅ Status alterado na blockchain! Hash: ${tx.hash}`, 'success');
       }
 
 
@@ -1460,24 +1456,24 @@ function SprintManagementPage() {
 
 
             console.log('💾 3. Atualizando blockchain_address no banco...');
-            try {
-              await fetch(`${getApiUrl()}/api/groups/${currentTeam.id}/sprints/${sprintId}/blockchain-sync`, {
-                method: 'PUT',
-                headers: {
-                  'Authorization': `Bearer ${token}`,
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  blockchainAddress: blockchainSprintIdFromEvent ? blockchainSprintIdFromEvent.toString() : tx.hash,
-                  transactionHash: tx.hash
-                })
-              });
-              console.log('✅ 3. Blockchain_address atualizado no banco');
-            } catch (hashError) {
-              console.warn('⚠️ Erro ao atualizar blockchain_address (não crítico):', hashError);
-            }
+            const syncResponse = await fetch(`${getApiUrl()}/api/groups/${currentTeam.id}/sprints/${sprintId}/blockchain-sync`, {
+              method: 'PUT',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                blockchainId: tx.hash,
+                transactionHash: tx.hash
+              })
+            });
 
-            customSetSuccess(`✅ Sucesso! Sprint atualizado. Hash: ${tx.hash}`, 'success');
+            if (!syncResponse.ok) {
+              throw new Error('Erro ao sincronizar blockchain_address no banco');
+            }
+            console.log('✅ 3. Blockchain_address atualizado no banco');
+
+            customSetSuccess(`✅ Sprint atualizado na blockchain! Hash: ${tx.hash}`, 'success');
           } else {
 
             const sprintHash = generateDataHash(sprintData);
@@ -1736,10 +1732,8 @@ function SprintManagementPage() {
             console.warn('⚠️ Erro ao salvar transação (não crítico):', transactionError);
           }
 
-          customSetSuccess(`✅ Sucesso! Sprint excluído. Hash: ${tx.hash}`, 'success');
+          customSetSuccess(`✅ Sprint excluído da blockchain! Hash: ${tx.hash}`, 'success');
         }
-      } else {
-        customSetSuccess('⚠️ Parcialmente concluído! Sprint excluído apenas do banco de dados. Blockchain indisponível.', 'warning');
       }
 
       await loadSprints();
@@ -1812,16 +1806,14 @@ function SprintManagementPage() {
 
 
         if (!isTeamSyncedLocally()) {
-          throw new Error('Equipe não está sincronizada com blockchain. Sincronize a equipe primeiro.');
-        }
+          console.warn('⚠️ Equipe não está sincronizada com blockchain. Continuando apenas no DB.');
+        } else {
+          const sprintMapping = blockchainMapping[sprint.id];
+          const blockchainSprintId = sprintMapping?.blockchainId || sprint.blockchainId;
 
-
-        const sprintMapping = blockchainMapping[sprint.id];
-        const blockchainSprintId = sprintMapping?.blockchainId || sprint.blockchainId;
-
-        if (!blockchainSprintId) {
-          throw new Error('Sprint não encontrado na blockchain');
-        }
+          if (!blockchainSprintId) {
+            console.warn('⚠️ Sprint não encontrado na blockchain. Continuando apenas no DB.');
+          } else {
 
 
         const statusMapping = { 'planning': 0, 'active': 1, 'completed': 2, 'cancelled': 3 };
@@ -1896,10 +1888,9 @@ function SprintManagementPage() {
         }
 
         const actionText = newStatus === 'active' ? 'iniciado' : newStatus === 'completed' ? 'finalizado' : 'atualizado';
-        customSetSuccess(`✅ Sucesso! Sprint ${actionText}. Hash: ${tx.hash}`, 'success');
-      } else {
-        const actionText = newStatus === 'active' ? 'iniciado' : newStatus === 'completed' ? 'finalizado' : 'atualizado';
-        customSetSuccess(`⚠️ Parcialmente concluído! Sprint ${actionText} no banco de dados. Blockchain indisponível.`, 'warning');
+        customSetSuccess(`✅ Sprint ${actionText} na blockchain! Hash: ${tx.hash}`, 'success');
+          }
+        }
       }
 
       await loadSprints();

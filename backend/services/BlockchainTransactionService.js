@@ -96,14 +96,26 @@ class BlockchainTransactionService {
     const client = await pool.connect();
     
     try {
+      console.log('🔍 [BlockchainTransactionService] findByUser - userId:', userId);
+      
+      // Busca transações de todas as equipes onde o usuário é membro
       let query = `
-        SELECT 
+        SELECT DISTINCT
           bt.*,
           u.username,
-          u.full_name
+          u.full_name,
+          g.name as team_name
         FROM blockchain_transactions bt
         LEFT JOIN users u ON bt.user_id = u.id
-        WHERE bt.user_id = $1
+        LEFT JOIN groups g ON bt.team_id = g.id
+        WHERE (
+          bt.team_id IN (
+            SELECT group_id 
+            FROM group_members 
+            WHERE user_id = $1
+          )
+          OR bt.team_id IS NULL
+        )
       `;
       
       let values = [userId];
@@ -328,8 +340,13 @@ class BlockchainTransactionService {
       let values = [];
       let paramIndex = 1;
       
+      // Se userId for fornecido, conta transações de todas as equipes do usuário
       if (filters.userId) {
-        query += ` AND user_id = $${paramIndex}`;
+        query += ` AND team_id IN (
+          SELECT group_id 
+          FROM group_members 
+          WHERE user_id = $${paramIndex}
+        )`;
         values.push(filters.userId);
         paramIndex++;
       }
@@ -398,8 +415,13 @@ class BlockchainTransactionService {
       let values = [];
       let paramIndex = 1;
       
+      // Se userId for fornecido, estatísticas de todas as equipes do usuário
       if (filters.userId) {
-        baseQuery += ` AND user_id = $${paramIndex}`;
+        baseQuery += ` AND team_id IN (
+          SELECT group_id 
+          FROM group_members 
+          WHERE user_id = $${paramIndex}
+        )`;
         values.push(filters.userId);
         paramIndex++;
       }

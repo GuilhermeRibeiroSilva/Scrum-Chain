@@ -47,4 +47,4 @@ ou descompacte o arquivo .zip
 - Importe uma conta das fornecidas pelo Hardhat usando a chave privadain.
 
 
-# Para mais Informçãoes Sobre o uso do projeto acesse o Wiki do Repositorio.
+# Para mais Informçãoes Sobre o uso do projeto acesse o Wiki do Repositorio por esse link [Wiki]([https://drive.google.com/file/d/1eoRxxblA8drvUz_W0VXwf_WtYtq8Bj51/view?usp=sharing](https://github.com/Gui-svg-gg/Scrum-Chain/wiki))
